@@ -20,7 +20,6 @@ class NoteController(val repository: NoteRepository) {
         val id: String?,
         val title: String,
         val content: String,
-        val ownerId: String
     )
 
     data class NoteResponse(
@@ -31,34 +30,24 @@ class NoteController(val repository: NoteRepository) {
     )
 
     @PostMapping
-    fun save(body: NoteRequest): NoteResponse {
+    fun save(@RequestBody body: NoteRequest): NoteResponse {
         val note = repository.save(
             Note(
                 id = body.id?.let { ObjectId(it) } ?: ObjectId.get(),
                 title = body.title,
                 content = body.content,
                 createdAt = Instant.now(),
-                ownerId = ObjectId(body.ownerId)
+                ownerId = ObjectId()
             )
         )
 
-        return NoteResponse(
-            id = note.id.toHexString(),
-            title = note.title,
-            content = note.content,
-            createdAt = note.createdAt
-        )
+        return note.toResponse()
     }
 
     @GetMapping
     fun findByOwnerId(@RequestParam(required = true) ownerId: String): List<NoteResponse> {
         return repository.findByOwnerId(ObjectId(ownerId)).map {
-            NoteResponse(
-                id = it.id.toHexString(),
-                title = it.title,
-                content = it.content,
-                createdAt = it.createdAt
-            )
+            it.toResponse()
         }
     }
 }
